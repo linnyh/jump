@@ -3,15 +3,22 @@ mod config;
 mod core;
 
 use clap::Parser;
-use commands::{AddCommand, HistCommand, JumpCommand, ListCommand, RmCommand};
+use commands::{AddCommand, HistCommand, InteractiveCommand, JumpCommand, ListCommand, RmCommand};
 use config::Config;
 
 #[derive(Parser, Debug)]
 #[command(name = "ccd")]
 #[command(version = "0.1.0")]
 struct Cli {
+    /// Interactive selection mode
+    #[arg(short, long)]
+    interactive: bool,
+    /// Open config file in editor
+    #[arg(short, long)]
+    edit: bool,
     #[command(subcommand)]
     command: Option<Command>,
+    /// Jump to directory matching pattern
     pattern: Option<String>,
 }
 
@@ -26,6 +33,17 @@ enum Command {
 fn main() {
     let cli = Cli::parse();
     let config = Config::new();
+
+    if cli.interactive {
+        InteractiveCommand::execute(&config).unwrap();
+        return;
+    }
+
+    // -e option will be implemented in Task 15
+    // if cli.edit {
+    //     commands::EditCommand.execute(&config).unwrap();
+    //     return;
+    // }
 
     match cli.command {
         Some(Command::Add { name }) => {
