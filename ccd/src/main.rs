@@ -1,4 +1,7 @@
 use clap::Parser;
+use config::Config;
+
+mod config;
 
 #[derive(Parser, Debug)]
 #[command(name = "ccd")]
