@@ -1,0 +1,19 @@
+# Build artifacts
+/target/
+
+# IDE
+.idea/
+*.iml
+
+# Editor backups
+*.swp
+*.swo
+*~
+*.rs.bk
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug
+*.pdb
