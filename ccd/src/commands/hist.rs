@@ -7,7 +7,7 @@ impl HistCommand {
     pub fn execute(&self, config: &Config) -> Result<(), String> {
         let history = storage::load_history(config)?;
         if history.entries.is_empty() {
-            println!("No history yet. Use 'ccd <pattern>' to jump and build history.");
+            println!("No history yet. Use 'j <pattern>' to jump and build history.");
             return Ok(());
         }
         for entry in history.entries.iter().take(20) {

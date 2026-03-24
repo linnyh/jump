@@ -9,7 +9,7 @@ use commands::{
 use config::Config;
 
 #[derive(Parser, Debug)]
-#[command(name = "ccd")]
+#[command(name = "j")]
 #[command(version = "0.1.0")]
 struct Cli {
     /// Interactive selection mode

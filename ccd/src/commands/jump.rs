@@ -8,7 +8,7 @@ pub struct JumpCommand {
 impl JumpCommand {
     pub fn execute(&self, config: &Config) -> Result<(), String> {
         let Some(pattern) = &self.pattern else {
-            return Err("Usage: ccd <pattern> - jump to a directory".to_string());
+            return Err("Usage: j <pattern> - jump to a directory".to_string());
         };
 
         let bookmarks = crate::core::storage::load_bookmarks(config)?;
