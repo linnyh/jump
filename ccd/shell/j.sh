@@ -3,6 +3,12 @@
 # 在 .zshrc 或 .bashrc 中 source 此文件
 
 j() {
+    # 对于需要终端交互的命令，直接调用原始命令
+    if [[ "$1" == "-e" ]] || [[ "$1" == "--edit" ]]; then
+        command j "$@"
+        return $?
+    fi
+
     local result
     result=$(command j "$@")
 
@@ -28,10 +34,22 @@ j() {
 
     # 只有包含 cd 命令时才 eval
     if [[ "$result" == cd\ * ]]; then
+        # 执行 cd 命令并记录历史
         eval "$result"
+        local cd_status=$?
+
+        if [[ $cd_status -eq 0 ]]; then
+            # 记录到会话历史
+            command j --record-current 2>/dev/null
+        fi
     else
         echo "$result"
     fi
+}
+
+# 内部命令：记录当前目录到会话历史
+_j_record() {
+    command j --record-current 2>/dev/null
 }
 
 # Tab 补全 (仅 zsh，延迟加载避免兼容性问题)
@@ -42,6 +60,7 @@ _j() {
         "rm:Remove a bookmark"
         "list:List all bookmarks"
         "hist:Show jump history"
+        "recent:Show session history"
     )
     _describe 'command' commands
 }
