@@ -57,6 +57,7 @@ clap = { version = "4.5", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dirs = "5.0"
+chrono = { version = "0.4", features = ["serde"] }
 ```
 
 - [ ] **Step 2: 创建 main.rs 骨架**
@@ -358,22 +359,15 @@ impl Default for History {
 }
 ```
 
-- [ ] **Step 5: 添加依赖到 Cargo.toml**
-
-```toml
-[dependencies]
-chrono = "0.4"
-```
-
-- [ ] **Step 6: 运行测试验证通过**
+- [ ] **Step 5: 运行测试验证通过**
 
 Run: `cd ccd && cargo test`
 Expected: PASS
 
-- [ ] **Step 7: 提交**
+- [ ] **Step 6: 提交**
 
 ```bash
-git add ccd/src/core/ ccd/Cargo.toml
+git add ccd/src/core/
 git commit -m "feat: add storage module with Bookmarks and History structs"
 ```
 
@@ -1125,7 +1119,221 @@ git commit -m "feat: add shell plugin for zsh/bash integration"
 
 ---
 
-### Task 13: 最终测试与清理
+### Task 14: 交互式选择器 (`ccd -i`)
+
+**Files:**
+- Create: `ccd/src/commands/interactive.rs`
+- Modify: `ccd/src/main.rs`
+
+- [ ] **Step 1: 更新 main.rs 添加 -i 选项**
+
+```rust
+#[derive(Parser, Debug)]
+#[command(name = "ccd")]
+#[command(version = "0.1.0")]
+struct Cli {
+    /// Interactive selection mode
+    #[arg(short, long)]
+    interactive: bool,
+    /// Open config file in editor
+    #[arg(short, long)]
+    edit: bool,
+    #[command(subcommand)]
+    command: Option<Command>,
+    /// Jump to directory matching pattern
+    pattern: Option<String>,
+}
+```
+
+- [ ] **Step 2: 实现 interactive.rs**
+
+```rust
+use crate::core::{matcher, storage, Config};
+
+pub struct InteractiveCommand;
+
+impl InteractiveCommand {
+    pub fn execute(config: &Config) -> Result<(), String> {
+        // 加载书签和历史
+        let bookmarks = storage::load_bookmarks(config)?;
+        let history = storage::load_history(config)?;
+
+        // 合并候选目录
+        let mut candidates: Vec<&str> = bookmarks.values().map(|s| s.as_str()).collect();
+        for entry in &history.entries {
+            if !candidates.contains(&entry.path.as_str()) {
+                candidates.push(&entry.path);
+            }
+        }
+
+        if candidates.is_empty() {
+            return Err("No directories available. Add bookmarks first.".to_string());
+        }
+
+        // 使用 fzf 选择
+        let selected = run_fzf_selector(&candidates)?;
+
+        if let Some(path) = selected {
+            println!("{}", crate::core::jumper::generate_cd_script(path));
+            Ok(())
+        } else {
+            Err("No selection".to_string())
+        }
+    }
+}
+
+/// 运行 fzf 进行交互式选择
+fn run_fzf_selector(candidates: &[&str]) -> Result<Option<String>, String> {
+    use std::process::{Command as ProcCommand, Stdio};
+    use std::io::Write;
+
+    // 构建 fzf 输入
+    let input: String = candidates.join("\n");
+
+    // 尝试调用 fzf
+    let mut child = ProcCommand::new("fzf")
+        .args(["--height=50%", "--layout=reverse", "--preview-window=right:50%"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|_| "fzf not found. Please install fzf: brew install fzf")?;
+
+    if let Some(mut stdin) = child.stdin.take() {
+        stdin.write_all(input.as_bytes())
+            .map_err(|e| format!("Failed to write to fzf: {}", e))?;
+    }
+
+    let output = child.wait_with_output()
+        .map_err(|e| format!("Failed to wait for fzf: {}", e))?;
+
+    if output.status.success() {
+        let selected = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if selected.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(selected))
+        }
+    } else {
+        Ok(None)  // 用户取消
+    }
+}
+```
+
+- [ ] **Step 3: 更新 main.rs 处理 -i 选项**
+
+```rust
+fn main() {
+    let cli = Cli::parse();
+    let config = Config::new();
+
+    if cli.interactive {
+        InteractiveCommand.execute(&config).unwrap();
+        return;
+    }
+
+    if cli.edit {
+        EditCommand.execute(&config).unwrap();
+        return;
+    }
+
+    // ... 现有代码 ...
+}
+```
+
+- [ ] **Step 4: 提交**
+
+```bash
+git add ccd/src/commands/interactive.rs ccd/src/main.rs
+git commit -m "feat: add interactive selection mode (ccd -i)"
+```
+
+---
+
+### Task 15: 配置编辑器 (`ccd -e`)
+
+**Files:**
+- Create: `ccd/src/commands/edit.rs`
+- Modify: `ccd/src/main.rs`
+
+- [ ] **Step 1: 实现 edit.rs**
+
+```rust
+use crate::Config;
+
+pub struct EditCommand;
+
+impl EditCommand {
+    pub fn execute(config: &Config) -> Result<(), String> {
+        use std::process::Command as ProcCommand;
+
+        // 获取编辑器
+        let editor = std::env::var("EDITOR")
+            .unwrap_or_else(|_| "vim".to_string());
+
+        // 确保配置文件存在
+        let bookmarks_path = config.bookmarks_path();
+        if !bookmarks_path.exists() {
+            let bookmarks_dir = bookmarks_path.parent().ok_or("Invalid config path")?;
+            std::fs::create_dir_all(bookmarks_dir)
+                .map_err(|e| format!("Failed to create config directory: {}", e))?;
+            std::fs::write(&bookmarks_path, r#"{"bookmarks": {}}"#)
+                .map_err(|e| format!("Failed to create bookmarks file: {}", e))?;
+        }
+
+        // 打开编辑器
+        let status = ProcCommand::new(&editor)
+            .arg(&bookmarks_path)
+            .status()
+            .map_err(|e| format!("Failed to open editor: {}", e))?;
+
+        if !status.success() {
+            return Err(format!("Editor exited with error"));
+        }
+
+        // 验证 JSON 格式
+        let content = std::fs::read_to_string(&bookmarks_path)
+            .map_err(|e| format!("Failed to read bookmarks: {}", e))?;
+
+        serde_json::from_str::<serde_json::Value>(&content)
+            .map_err(|_| "Invalid JSON format in bookmarks file".to_string())?;
+
+        println!("Configuration saved.");
+        Ok(())
+    }
+}
+```
+
+- [ ] **Step 2: 更新 commands/mod.rs**
+
+```rust
+pub mod add;
+pub mod list;
+pub mod hist;
+pub mod rm;
+pub mod jump;
+pub mod interactive;
+pub mod edit;
+
+pub use add::AddCommand;
+pub use list::ListCommand;
+pub use hist::HistCommand;
+pub use rm::RmCommand;
+pub use jump::JumpCommand;
+pub use interactive::InteractiveCommand;
+pub use edit::EditCommand;
+```
+
+- [ ] **Step 3: 提交**
+
+```bash
+git add ccd/src/commands/edit.rs ccd/src/main.rs
+git commit -m "feat: add config editor (ccd -e)"
+```
+
+---
+
+### Task 16: 最终测试与清理
 
 **Files:**
 - Verify: 所有源文件
@@ -1135,17 +1343,27 @@ git commit -m "feat: add shell plugin for zsh/bash integration"
 Run: `cd ccd && cargo test`
 Expected: 全部 PASS
 
-- [ ] **Step 2: 构建 release 版本**
+- [ ] **Step 2: 运行 clippy 检查**
+
+Run: `cd ccd && cargo clippy -- -D warnings`
+Expected: 无警告
+
+- [ ] **Step 3: 运行 fmt 格式化**
+
+Run: `cd ccd && cargo fmt -- --check`
+Expected: 无输出（已格式化）
+
+- [ ] **Step 4: 构建 release 版本**
 
 Run: `cd ccd && cargo build --release`
 Expected: 编译成功
 
-- [ ] **Step 3: 测试 CLI 帮助**
+- [ ] **Step 5: 测试 CLI 帮助**
 
 Run: `cd ccd && cargo run -- --help`
 Expected: 显示帮助信息
 
-- [ ] **Step 4: 提交**
+- [ ] **Step 6: 提交**
 
 ```bash
 git add -A
@@ -1154,6 +1372,8 @@ git commit -m "feat: complete ccd CLI tool implementation
 - Fuzzy directory matching (FZF style)
 - Bookmark management (add/rm/list)
 - Jump history tracking
+- Interactive selection with fzf (ccd -i)
+- Config editor (ccd -e)
 - Shell plugin for zsh/bash"
 ```
 
@@ -1161,11 +1381,13 @@ git commit -m "feat: complete ccd CLI tool implementation
 
 ## 总结
 
-完成以上 13 个任务后，你将拥有一个功能完整的 `ccd` 目录跳转工具，具备：
+完成以上 16 个任务后，你将拥有一个功能完整的 `ccd` 目录跳转工具，具备：
 
 - ✅ FZF 风格的模糊匹配
 - ✅ 书签管理（增删查）
 - ✅ 访问历史记录
+- ✅ 交互式选择器 (`ccd -i`)
+- ✅ 配置编辑器 (`ccd -e`)
 - ✅ Shell 集成插件
 
 **使用方式：**
@@ -1177,13 +1399,15 @@ cp target/release/ccd ~/.local/bin/  # 或使用 cargo install
 
 # 基本用法
 ccd myproj              # 跳转到匹配目录
-ccd add proj             # 添加书签
-ccd list                 # 列出书签
-ccd hist                 # 查看历史
-ccd rm proj              # 删除书签
+ccd add proj            # 添加书签
+ccd list                # 列出书签
+ccd hist                # 查看历史
+ccd rm proj             # 删除书签
+ccd -i                  # 交互式选择 (需要安装 fzf)
+ccd -e                  # 编辑配置文件
 
 # Shell 集成 (可选)
 echo 'source /path/to/ccd/shell/ccd.sh' >> ~/.zshrc
 source ~/.zshrc
-ccd myproj               # 直接跳转生效
+ccd myproj              # 直接跳转生效
 ```
