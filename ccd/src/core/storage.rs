@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Bookmarks {
@@ -97,3 +98,49 @@ impl Default for History {
 }
 
 // 注意：load_bookmarks, save_bookmarks, load_history, save_history 函数将在 Task 11 中实现
+
+pub fn load_bookmarks(config: &crate::config::Config) -> Result<Bookmarks, String> {
+    let path = config.bookmarks_path();
+    if !path.exists() {
+        return Ok(Bookmarks::new());
+    }
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read bookmarks: {}", e))?;
+    serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse bookmarks: {}", e))
+}
+
+pub fn save_bookmarks(config: &crate::config::Config, bookmarks: &Bookmarks) -> Result<(), String> {
+    let path = config.bookmarks_path();
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create config directory: {}", e))?;
+    }
+    let content = serde_json::to_string_pretty(bookmarks)
+        .map_err(|e| format!("Failed to serialize bookmarks: {}", e))?;
+    fs::write(&path, content)
+        .map_err(|e| format!("Failed to write bookmarks: {}", e))
+}
+
+pub fn load_history(config: &crate::config::Config) -> Result<History, String> {
+    let path = config.history_path();
+    if !path.exists() {
+        return Ok(History::new());
+    }
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read history: {}", e))?;
+    serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse history: {}", e))
+}
+
+pub fn save_history(config: &crate::config::Config, history: &History) -> Result<(), String> {
+    let path = config.history_path();
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create config directory: {}", e))?;
+    }
+    let content = serde_json::to_string_pretty(history)
+        .map_err(|e| format!("Failed to serialize history: {}", e))?;
+    fs::write(&path, content)
+        .map_err(|e| format!("Failed to write history: {}", e))
+}
