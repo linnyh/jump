@@ -10,9 +10,12 @@ pub struct Bookmarks {
 
 impl Bookmarks {
     pub fn new() -> Self {
-        Self { bookmarks: HashMap::new() }
+        Self {
+            bookmarks: HashMap::new(),
+        }
     }
 
+    #[cfg(test)]
     pub fn get(&self, name: &str) -> Option<&String> {
         self.bookmarks.get(name)
     }
@@ -29,6 +32,7 @@ impl Bookmarks {
         self.bookmarks.values().collect()
     }
 
+    #[cfg(test)]
     pub fn len(&self) -> usize {
         self.bookmarks.len()
     }
@@ -53,6 +57,7 @@ pub struct HistoryEntry {
 }
 
 impl HistoryEntry {
+    #[cfg(test)]
     pub fn new(path: &str) -> Self {
         Self {
             path: path.to_string(),
@@ -61,6 +66,7 @@ impl HistoryEntry {
         }
     }
 
+    #[cfg(test)]
     pub fn increment_access(&mut self) {
         self.access_count += 1;
         self.last_access = chrono::Utc::now().to_rfc3339();
@@ -74,9 +80,12 @@ pub struct History {
 
 impl History {
     pub fn new() -> Self {
-        Self { entries: Vec::new() }
+        Self {
+            entries: Vec::new(),
+        }
     }
 
+    #[cfg(test)]
     pub fn add_or_update(&mut self, path: &str) {
         if let Some(entry) = self.entries.iter_mut().find(|e| e.path == path) {
             entry.increment_access();
@@ -85,9 +94,12 @@ impl History {
             entry.increment_access(); // 首次访问计为1次
             self.entries.push(entry);
         }
-        self.entries.sort_by(|a, b| b.access_count.cmp(&a.access_count));
+        self.entries
+            .sort_by(|a, b| b.access_count.cmp(&a.access_count));
     }
 
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn recent(&self, n: usize) -> Vec<&HistoryEntry> {
         self.entries.iter().take(n).collect()
     }
@@ -106,10 +118,9 @@ pub fn load_bookmarks(config: &crate::config::Config) -> Result<Bookmarks, Strin
     if !path.exists() {
         return Ok(Bookmarks::new());
     }
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read bookmarks: {}", e))?;
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse bookmarks: {}", e))
+    let content =
+        fs::read_to_string(&path).map_err(|e| format!("Failed to read bookmarks: {}", e))?;
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse bookmarks: {}", e))
 }
 
 pub fn save_bookmarks(config: &crate::config::Config, bookmarks: &Bookmarks) -> Result<(), String> {
@@ -130,8 +141,7 @@ pub fn save_bookmarks(config: &crate::config::Config, bookmarks: &Bookmarks) -> 
     let content = serde_json::to_string_pretty(bookmarks)
         .map_err(|e| format!("Failed to serialize bookmarks: {}", e))?;
 
-    fs::write(&path, content)
-        .map_err(|e| format!("Failed to write bookmarks: {}", e))
+    fs::write(&path, content).map_err(|e| format!("Failed to write bookmarks: {}", e))
 }
 
 pub fn load_history(config: &crate::config::Config) -> Result<History, String> {
@@ -139,12 +149,12 @@ pub fn load_history(config: &crate::config::Config) -> Result<History, String> {
     if !path.exists() {
         return Ok(History::new());
     }
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read history: {}", e))?;
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse history: {}", e))
+    let content =
+        fs::read_to_string(&path).map_err(|e| format!("Failed to read history: {}", e))?;
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse history: {}", e))
 }
 
+#[allow(dead_code)]
 pub fn save_history(config: &crate::config::Config, history: &History) -> Result<(), String> {
     let path = config.history_path();
 
@@ -163,8 +173,7 @@ pub fn save_history(config: &crate::config::Config, history: &History) -> Result
     let content = serde_json::to_string_pretty(history)
         .map_err(|e| format!("Failed to serialize history: {}", e))?;
 
-    fs::write(&path, content)
-        .map_err(|e| format!("Failed to write history: {}", e))
+    fs::write(&path, content).map_err(|e| format!("Failed to write history: {}", e))
 }
 
 #[cfg(test)]
@@ -234,7 +243,11 @@ mod tests {
         assert_eq!(loaded.entries.len(), 2);
 
         // dir1 有2次访问，应该排第一
-        let dir1_entry = loaded.entries.iter().find(|e| e.path == "/Users/test/dir1").unwrap();
+        let dir1_entry = loaded
+            .entries
+            .iter()
+            .find(|e| e.path == "/Users/test/dir1")
+            .unwrap();
         assert_eq!(dir1_entry.access_count, 2);
 
         // 验证排序：dir1 应该在第一位

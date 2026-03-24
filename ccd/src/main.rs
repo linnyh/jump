@@ -3,7 +3,9 @@ mod config;
 mod core;
 
 use clap::Parser;
-use commands::{AddCommand, EditCommand, HistCommand, InteractiveCommand, JumpCommand, ListCommand, RmCommand};
+use commands::{
+    AddCommand, EditCommand, HistCommand, InteractiveCommand, JumpCommand, ListCommand, RmCommand,
+};
 use config::Config;
 
 #[derive(Parser, Debug)]
@@ -58,7 +60,11 @@ fn main() {
             HistCommand.execute(&config).unwrap();
         }
         None => {
-            JumpCommand { pattern: cli.pattern }.execute(&config).unwrap();
+            JumpCommand {
+                pattern: cli.pattern,
+            }
+            .execute(&config)
+            .unwrap();
         }
     }
 }

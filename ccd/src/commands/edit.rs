@@ -7,8 +7,7 @@ impl EditCommand {
         use std::process::Command as ProcCommand;
 
         // 获取编辑器
-        let editor = std::env::var("EDITOR")
-            .unwrap_or_else(|_| "vim".to_string());
+        let editor = std::env::var("EDITOR").unwrap_or_else(|_| "vim".to_string());
 
         // 确保配置文件存在
         let bookmarks_path = config.bookmarks_path();
@@ -27,7 +26,7 @@ impl EditCommand {
             .map_err(|e| format!("Failed to open editor: {}", e))?;
 
         if !status.success() {
-            return Err(format!("Editor exited with error"));
+            return Err("Editor exited with error".to_string());
         }
 
         // 验证 JSON 格式

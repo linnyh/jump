@@ -11,7 +11,10 @@ impl HistCommand {
             return Ok(());
         }
         for entry in history.entries.iter().take(20) {
-            println!("{} [{}]: {}", entry.access_count, entry.last_access, entry.path);
+            println!(
+                "{} [{}]: {}",
+                entry.access_count, entry.last_access, entry.path
+            );
         }
         Ok(())
     }

@@ -12,11 +12,13 @@ fn shell_escape(path: &str) -> String {
     format!("'{}'", escaped)
 }
 
+#[allow(dead_code)]
 pub fn validate_path(path: &str) -> bool {
     Path::new(path).is_dir()
 }
 
-pub fn select_best_match<'a>(matches: &'a [super::matcher::MatchResult]) -> Option<&'a str> {
+#[allow(dead_code)]
+pub fn select_best_match(matches: &[super::matcher::MatchResult]) -> Option<&str> {
     if matches.is_empty() {
         return None;
     }

@@ -60,13 +60,16 @@ pub struct MatchResult {
     pub score: u32,
 }
 
-pub fn fuzzy_match<'a>(input: &str, candidates: &'a [&str]) -> Vec<MatchResult> {
+pub fn fuzzy_match(input: &str, candidates: &[&str]) -> Vec<MatchResult> {
     let mut results: Vec<MatchResult> = candidates
         .iter()
         .filter_map(|&path| {
             let score = fuzzy_score(input, path);
             if score > 0 {
-                Some(MatchResult { path: path.to_string(), score })
+                Some(MatchResult {
+                    path: path.to_string(),
+                    score,
+                })
             } else {
                 None
             }

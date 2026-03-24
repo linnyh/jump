@@ -12,10 +12,14 @@ impl Config {
         Self { config_dir }
     }
 
-    pub fn from_path(path: &PathBuf) -> Self {
-        Self { config_dir: path.clone() }
+    #[cfg(test)]
+    pub fn from_path(path: &std::path::Path) -> Self {
+        Self {
+            config_dir: path.to_path_buf(),
+        }
     }
 
+    #[cfg(test)]
     pub fn config_dir(&self) -> &PathBuf {
         &self.config_dir
     }

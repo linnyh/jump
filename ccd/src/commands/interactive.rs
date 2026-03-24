@@ -43,7 +43,11 @@ fn run_fzf_selector(candidates: &[&str]) -> Result<Option<String>, String> {
 
     // 尝试调用 fzf
     let mut child = ProcCommand::new("fzf")
-        .args(["--height=50%", "--layout=reverse", "--preview-window=right:50%"])
+        .args([
+            "--height=50%",
+            "--layout=reverse",
+            "--preview-window=right:50%",
+        ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
