@@ -3,7 +3,7 @@ mod config;
 mod core;
 
 use clap::Parser;
-use commands::{AddCommand, HistCommand, InteractiveCommand, JumpCommand, ListCommand, RmCommand};
+use commands::{AddCommand, EditCommand, HistCommand, InteractiveCommand, JumpCommand, ListCommand, RmCommand};
 use config::Config;
 
 #[derive(Parser, Debug)]
@@ -39,11 +39,10 @@ fn main() {
         return;
     }
 
-    // -e option will be implemented in Task 15
-    // if cli.edit {
-    //     commands::EditCommand.execute(&config).unwrap();
-    //     return;
-    // }
+    if cli.edit {
+        EditCommand::execute(&config).unwrap();
+        return;
+    }
 
     match cli.command {
         Some(Command::Add { name }) => {
