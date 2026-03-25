@@ -4,7 +4,7 @@ mod core;
 
 use clap::Parser;
 use commands::{
-    add_to_history, fuzzy_match_session_history, print_session_history, AddCommand, EditCommand,
+    add_to_history, print_session_history, AddCommand, EditCommand,
     HistCommand, InteractiveCommand, JumpCommand, ListCommand, RmCommand,
 };
 use config::Config;
@@ -25,6 +25,9 @@ struct Cli {
     /// Record current directory to session history (internal use)
     #[arg(long, hide = true)]
     record_current: bool,
+    /// Current working directory (set by shell plugin)
+    #[arg(long, hide = true, value_name = "DIR")]
+    cwd: Option<String>,
     #[command(subcommand)]
     command: Option<Command>,
     /// Jump to directory matching pattern
@@ -64,17 +67,20 @@ fn main() {
         return;
     }
 
+    // 获取 shell 传入的 cwd（如果有）
+    let shell_cwd = cli.cwd.clone();
+
     if cli.recent {
+        // recent 子命令或 -r 选项
         if let Some(pattern) = &cli.pattern {
-            // 模糊匹配会话历史
-            if let Some(path) = fuzzy_match_session_history(pattern) {
+            let result = crate::commands::recent::fuzzy_match_session_history(pattern);
+            if let Some(path) = result {
                 println!("{}", crate::core::jumper::generate_cd_script(&path));
             } else {
                 eprintln!("No matching path in session history");
                 std::process::exit(1);
             }
         } else {
-            // 打印会话历史
             print_session_history();
         }
         return;
@@ -95,7 +101,8 @@ fn main() {
         }
         Some(Command::Recent) => {
             if let Some(pattern) = &cli.pattern {
-                if let Some(path) = fuzzy_match_session_history(pattern) {
+                let result = crate::commands::recent::fuzzy_match_session_history(pattern);
+                if let Some(path) = result {
                     println!("{}", crate::core::jumper::generate_cd_script(&path));
                 } else {
                     eprintln!("No matching path in session history");
@@ -107,28 +114,16 @@ fn main() {
         }
         None => {
             if let Some(pattern) = &cli.pattern {
-                // 先尝试匹配会话历史
-                if let Some(path) = fuzzy_match_session_history(pattern) {
-                    println!("{}", crate::core::jumper::generate_cd_script(&path));
-                    return;
-                }
-
-                // 再尝试书签
-                let result = JumpCommand {
+                // JumpCommand 会依次匹配：本地目录 → 书签 → 会话历史
+                JumpCommand {
                     pattern: Some(pattern.clone()),
+                    cwd: shell_cwd,
                 }
-                .execute(&config);
-
-                match result {
-                    Ok(_) => {}
-                    Err(_) => {
-                        // 书签也没有匹配，尝试交互式选择
-                        InteractiveCommand::execute(&config).unwrap_or_else(|e| {
-                            eprintln!("{}", e);
-                            std::process::exit(1);
-                        });
-                    }
-                }
+                .execute(&config)
+                .unwrap_or_else(|e| {
+                    eprintln!("{}", e);
+                    std::process::exit(1);
+                });
             } else {
                 // 无参数，显示会话历史
                 print_session_history();

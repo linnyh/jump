@@ -2,6 +2,9 @@
 # j shell plugin
 # 在 .zshrc 或 .bashrc 中 source 此文件
 
+# 确保 ~/.cargo/bin 在 PATH 中
+export PATH="$HOME/.cargo/bin:$PATH"
+
 j() {
     # 对于需要终端交互的命令，直接调用原始命令
     if [[ "$1" == "-e" ]] || [[ "$1" == "--edit" ]]; then
@@ -9,8 +12,11 @@ j() {
         return $?
     fi
 
+    # 获取当前工作目录
+    local current_dir="$(pwd)"
+
     local result
-    result=$(command j "$@")
+    result=$(command j --cwd "$current_dir" "$@")
 
     # 如果没有输出，直接返回
     if [[ -z "$result" ]]; then

@@ -64,13 +64,34 @@ pub fn print_session_history() {
 
 /// 从会话历史中匹配并选择
 pub fn fuzzy_match_session_history(input: &str) -> Option<String> {
+    // 如果是 ~ 单独，直接返回 home 目录
+    if input == "~" {
+        return dirs::home_dir().map(|p| p.to_string_lossy().to_string());
+    }
+
+    // 如果输入就是 home 目录本身（shell 已展开 ~），直接返回
+    if let Ok(home) = std::env::var("HOME") {
+        if input == home {
+            return Some(home);
+        }
+    }
+
     let history = load_session_history();
     if history.is_empty() {
         return None;
     }
 
+    // 展开 ~ 前缀为实际路径
+    let pattern = if input.starts_with("~/") {
+        dirs::home_dir()
+            .map(|home| format!("{}/{}", home.to_string_lossy(), &input[2..]))
+            .unwrap_or_else(|| input.to_string())
+    } else {
+        input.to_string()
+    };
+
     let candidates: Vec<&str> = history.iter().map(|s| s.as_str()).collect();
-    let matches = matcher::fuzzy_match(input, &candidates);
+    let matches = matcher::fuzzy_match(&pattern, &candidates);
 
     // 如果只有一个明确匹配，直接返回
     if matches.len() == 1 {
