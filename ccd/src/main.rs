@@ -12,6 +12,15 @@ use config::Config;
 #[derive(Parser, Debug)]
 #[command(name = "j")]
 #[command(version = "0.1.0")]
+#[command(after_help = "\
+CD-Style Commands (handled by shell plugin):
+  j ..              Jump to parent directory
+  j /path           Jump to absolute path
+  j ../dir          Jump to relative path
+  j -               Jump to previous directory
+  j --back / j -b   Jump back to previous jump location
+
+Note: These require sourcing the shell plugin (source /path/to/j/shell/j.sh)")]
 struct Cli {
     /// Interactive selection mode
     #[arg(short, long)]
@@ -22,6 +31,9 @@ struct Cli {
     /// Session history mode
     #[arg(short, long)]
     recent: bool,
+    /// Return to previous jump location (shell plugin)
+    #[arg(short = 'b', long)]
+    back: bool,
     /// Record current directory to session history (internal use)
     #[arg(long, hide = true)]
     record_current: bool,
@@ -74,6 +86,11 @@ fn main() {
 
     if cli.edit {
         EditCommand::execute(&config).unwrap();
+        return;
+    }
+
+    if cli.back {
+        eprintln!("j --back must be used via shell plugin: source /path/to/j/shell/j.sh");
         return;
     }
 
