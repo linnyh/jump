@@ -1,6 +1,10 @@
 # 🚀 j - 快速目录跳转工具
 
 <p align="center">
+  <img src="./img/icon.png" alt="j logo" width="128" height="128">
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/version-0.1.0-blue.svg" alt="version">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license">
   <img src="https://img.shields.io/badge/Rust-1.56+-orange.svg" alt="rust">
