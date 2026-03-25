@@ -4,7 +4,7 @@ mod core;
 
 use clap::Parser;
 use commands::{
-    add_to_history, print_session_history, AddCommand, EditCommand,
+    add_to_history, list_groups, print_session_history, AddCommand, EditCommand,
     HistCommand, InteractiveCommand, JumpCommand, ListCommand, RmCommand,
 };
 use config::Config;
@@ -36,10 +36,29 @@ struct Cli {
 
 #[derive(Parser, Debug)]
 enum Command {
-    Add { name: String },
-    Rm { name: String },
-    List,
+    /// Add a bookmark for the current directory
+    Add {
+        name: String,
+        /// Group to organize the bookmark
+        #[arg(short, long)]
+        group: Option<String>,
+    },
+    /// Remove a bookmark
+    Rm {
+        name: String,
+    },
+    /// List all bookmarks
+    List {
+        /// Filter by group
+        #[arg(short, long)]
+        group: Option<String>,
+    },
+    /// Show session history and allow selection
     Hist,
+    /// Show jump history
+    History,
+    /// Show all groups
+    Groups,
     /// Show session history and allow selection
     Recent,
 }
@@ -71,7 +90,7 @@ fn main() {
     let shell_cwd = cli.cwd.clone();
 
     if cli.recent {
-        // recent 子命令或 -r 选项
+        // -r 选项
         if let Some(pattern) = &cli.pattern {
             let result = crate::commands::recent::fuzzy_match_session_history(pattern);
             if let Some(path) = result {
@@ -87,17 +106,20 @@ fn main() {
     }
 
     match cli.command {
-        Some(Command::Add { name }) => {
-            AddCommand { name }.execute(&config).unwrap();
+        Some(Command::Add { name, group }) => {
+            AddCommand { name, group }.execute(&config).unwrap();
         }
         Some(Command::Rm { name }) => {
             RmCommand { name }.execute(&config).unwrap();
         }
-        Some(Command::List) => {
-            ListCommand.execute(&config).unwrap();
+        Some(Command::List { group }) => {
+            ListCommand { group }.execute(&config).unwrap();
         }
-        Some(Command::Hist) => {
+        Some(Command::Hist) | Some(Command::History) => {
             HistCommand.execute(&config).unwrap();
+        }
+        Some(Command::Groups) => {
+            list_groups(&config).unwrap();
         }
         Some(Command::Recent) => {
             if let Some(pattern) = &cli.pattern {

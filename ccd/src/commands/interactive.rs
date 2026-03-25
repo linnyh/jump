@@ -10,7 +10,7 @@ impl InteractiveCommand {
         let history = storage::load_history(config)?;
 
         // 合并候选目录
-        let mut candidates: Vec<&str> = bookmarks.values().iter().map(|s| s.as_str()).collect();
+        let mut candidates: Vec<&str> = bookmarks.values().iter().map(|s| s.path.as_str()).collect();
         for entry in &history.entries {
             if !candidates.contains(&entry.path.as_str()) {
                 candidates.push(&entry.path);

@@ -3,32 +3,66 @@ use std::collections::HashMap;
 use std::fs;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BookmarkEntry {
+    pub path: String,
+    #[serde(default)]
+    pub group: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Bookmarks {
     #[serde(flatten)]
-    pub bookmarks: HashMap<String, String>,
+    pub bookmarks: HashMap<String, BookmarkEntry>,
+    #[serde(default)]
+    pub groups: Vec<String>,
 }
 
 impl Bookmarks {
     pub fn new() -> Self {
         Self {
             bookmarks: HashMap::new(),
+            groups: Vec::new(),
         }
     }
 
     #[cfg(test)]
-    pub fn get(&self, name: &str) -> Option<&String> {
+    pub fn get(&self, name: &str) -> Option<&BookmarkEntry> {
         self.bookmarks.get(name)
     }
 
-    pub fn insert(&mut self, name: String, path: String) {
-        self.bookmarks.insert(name, path);
+    #[cfg(test)]
+    pub fn get_path(&self, name: &str) -> Option<String> {
+        self.bookmarks.get(name).map(|e| e.path.clone())
     }
 
-    pub fn remove(&mut self, name: &str) -> Option<String> {
+    pub fn insert(&mut self, name: String, path: String, group: Option<String>) {
+        // 如果有分组，添加到 groups 列表
+        if let Some(ref g) = group {
+            if !self.groups.contains(g) {
+                self.groups.push(g.clone());
+            }
+        }
+        self.bookmarks.insert(name, BookmarkEntry { path, group });
+    }
+
+    pub fn remove(&mut self, name: &str) -> Option<BookmarkEntry> {
         self.bookmarks.remove(name)
     }
 
-    pub fn values(&self) -> Vec<&String> {
+    /// 获取指定分组的书签
+    pub fn get_by_group(&self, group: &str) -> Vec<(&String, &BookmarkEntry)> {
+        self.bookmarks
+            .iter()
+            .filter(|(_, entry)| entry.group.as_deref() == Some(group))
+            .collect()
+    }
+
+    /// 获取所有分组
+    pub fn list_groups(&self) -> Vec<&String> {
+        self.groups.iter().collect()
+    }
+
+    pub fn values(&self) -> Vec<&BookmarkEntry> {
         self.bookmarks.values().collect()
     }
 
@@ -212,8 +246,8 @@ mod tests {
     fn test_save_and_load_bookmarks() {
         let config = temp_config();
         let mut bookmarks = Bookmarks::new();
-        bookmarks.insert("home".to_string(), "/Users/test".to_string());
-        bookmarks.insert("work".to_string(), "/Users/test/work".to_string());
+        bookmarks.insert("home".to_string(), "/Users/test".to_string(), None);
+        bookmarks.insert("proj".to_string(), "/Users/test/work".to_string(), Some("work".to_string()));
 
         // 保存
         let save_result = save_bookmarks(&config, &bookmarks);
@@ -222,8 +256,9 @@ mod tests {
         // 加载
         let loaded = load_bookmarks(&config).unwrap();
         assert_eq!(loaded.len(), 2);
-        assert_eq!(loaded.get("home"), Some(&"/Users/test".to_string()));
-        assert_eq!(loaded.get("work"), Some(&"/Users/test/work".to_string()));
+        assert_eq!(loaded.get_path("home"), Some("/Users/test".to_string()));
+        assert_eq!(loaded.get_path("proj"), Some("/Users/test/work".to_string()));
+        assert_eq!(loaded.list_groups(), vec!["work"]);
     }
 
     #[test]
@@ -258,13 +293,13 @@ mod tests {
     fn test_backup_on_save() {
         let config = temp_config();
         let mut bookmarks = Bookmarks::new();
-        bookmarks.insert("test".to_string(), "/path".to_string());
+        bookmarks.insert("test".to_string(), "/path".to_string(), None);
 
         // 第一次保存
         save_bookmarks(&config, &bookmarks).unwrap();
 
         // 修改书签
-        bookmarks.insert("test".to_string(), "/new_path".to_string());
+        bookmarks.insert("test".to_string(), "/new_path".to_string(), None);
 
         // 第二次保存，应该创建备份
         save_bookmarks(&config, &bookmarks).unwrap();

@@ -108,12 +108,12 @@ fn find_best_bookmark_match(
     let mut best_score = 0u32;
     let mut best_path = None;
 
-    for (name, path) in &bookmarks.bookmarks {
+    for (name, entry) in &bookmarks.bookmarks {
         // 先匹配书签名称
         let name_score = matcher::fuzzy_score(pattern, name);
 
         // 再匹配路径
-        let path_score = matcher::fuzzy_score(pattern, path);
+        let path_score = matcher::fuzzy_score(pattern, &entry.path);
 
         // 取较高分，但书签名称优先
         let score = if name_score > 0 {
@@ -124,7 +124,7 @@ fn find_best_bookmark_match(
 
         if score > best_score {
             best_score = score;
-            best_path = Some(path.clone());
+            best_path = Some(entry.path.clone());
         }
     }
 
