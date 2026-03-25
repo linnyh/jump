@@ -1,16 +1,16 @@
+<div align="center">
+
 # 🚀 j - 快速目录跳转工具
 
-<p align="center">
-  <img src="./img/icon.png" alt="j logo" width="128" height="128">
-</p>
+<img src="img/icon.png" alt="j logo" width="128" height="128">
 
-<p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue.svg" alt="version">
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license">
-  <img src="https://img.shields.io/badge/Rust-1.56+-orange.svg" alt="rust">
-</p>
+![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Rust](https://img.shields.io/badge/Rust-1.56+-orange.svg)
 
 > ⚡ 让目录跳转像飞一样！j 是一个轻量级的命令行工具，结合书签管理和模糊匹配，让你的终端导航效率提升 10 倍。
+
+</div>
 
 ## ✨ 特性
 
