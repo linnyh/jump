@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.56+-orange.svg)](https://www.rust-lang.org)
 
-<p><i>⚡ 让目录跳转像飞一样！j 是一个轻量级的命令行工具，结合书签管理和模糊匹配，让你的终端导航效率提升 10 倍。</i></p>
+<p><i>⚡ 让目录跳转像飞一样！jump 是一个轻量级的命令行工具，结合书签管理和模糊匹配，让你的终端导航效率提升 10 倍。</i></p>
 
 </div>
 
