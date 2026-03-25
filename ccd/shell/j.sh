@@ -116,6 +116,7 @@ _j() {
         "add:Add bookmark for current directory"
         "rm:Remove a bookmark"
         "list:List all bookmarks"
+        "groups:List all bookmark groups"
         "hist:Show jump history"
         "recent:Show session history"
     )
