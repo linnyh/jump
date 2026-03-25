@@ -1,17 +1,35 @@
-# j - 快速目录跳转工具
+# 🚀 j - 快速目录跳转工具
 
-一个轻量级的命令行工具，用于快速跳转到常用目录。结合书签管理和模糊匹配，让目录跳转变得高效便捷。
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.1.0-blue.svg" alt="version">
+  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license">
+  <img src="https://img.shields.io/badge/Rust-1.56+-orange.svg" alt="rust">
+</p>
 
-## 快速开始
+> ⚡ 让目录跳转像飞一样！j 是一个轻量级的命令行工具，结合书签管理和模糊匹配，让你的终端导航效率提升 10 倍。
+
+## ✨ 特性
+
+| 特性 | 说明 |
+|------|------|
+| 🎯 **CD 替代** | 完全替代 `cd`，支持 `..`、`/path`、`-`、`--back` 等 |
+| 🔍 **模糊匹配** | FZF 风格的模糊搜索，输入即跳转 |
+| 🔖 **书签管理** | 保存常用目录，支持分组分类 |
+| 📜 **会话历史** | 自动记录会话访问过的目录 |
+| 🗂️ **本地优先** | 优先匹配当前目录下的子目录 |
+| 🌈 **跨平台** | 支持 macOS 和 Linux |
+
+## ⚡ 快速开始
 
 ```bash
 # 1. 安装
 cargo install --path .
 
 # 2. 配置 shell 插件（添加到 ~/.zshrc）
-source /path/to/j/shell/j.sh
+echo 'source /path/to/j/shell/j.sh' >> ~/.zshrc
+source ~/.zshrc
 
-# 3. 使用
+# 3. 开始使用
 cd ~/Projects/myapp
 j add myapp          # 添加书签
 j myapp              # 快速跳转回来
@@ -19,27 +37,23 @@ j ..                 # 跳转到父目录
 j --back             # 返回
 ```
 
-## 功能特性
+## 📦 安装
 
-- **cd 替代**: 完全替代 cd，支持 `..`、`/path`、`-`、`--back` 等
-- **模糊匹配**: FZF 风格的模糊搜索，输入即跳转
-- **书签管理**: 保存常用目录，方便快速访问
-- **分组管理**: 支持书签按项目/用途分类
-- **会话历史**: 自动记录当前会话访问过的目录
-- **本地优先**: 优先匹配当前目录下的子目录
-- **跨平台**: 支持 macOS 和 Linux
-
-## 安装
-
-### 1. 安装二进制
+### 方式一：源码安装
 
 ```bash
 cargo install --path .
 ```
 
-### 2. 配置 Shell 插件
+### 方式二：Homebrew (待支持)
 
-**重要**: cd 风格命令（`j ..`、`j --back` 等）需要加载 shell 插件才能工作。
+```bash
+brew install j
+```
+
+### Shell 插件配置
+
+> ⚠️ **重要**: cd 风格命令（`j ..`、`j --back` 等）需要加载 shell 插件才能工作。
 
 在 `~/.zshrc` 或 `~/.bashrc` 中添加：
 
@@ -47,109 +61,103 @@ cargo install --path .
 source /path/to/j/shell/j.sh
 ```
 
-插件会自动将 `j` 命令设为 `cd` 的替代品。
+## 🎮 使用指南
 
-## 使用方法
+### CD 风格命令（完全替代 cd）
 
-### 基本命令
+| 命令 | 说明 |
+|------|------|
+| `j ..` | 跳转到父目录 |
+| `j /path` | 跳转到绝对路径 |
+| `j ../dir` | 跳转到相对路径 |
+| `j -` | 返回上一个目录 |
+| `j --back` / `j -b` | 返回上一次跳转的目录 |
 
-```bash
-j <pattern>          # 模糊匹配并跳转
-j ~                  # 跳转到主目录
-j                    # 查看会话历史
+### 🔖 书签管理
+
+| 命令 | 说明 |
+|------|------|
+| `j add <name>` | 添加书签（当前目录） |
+| `j add <name> --group <group>` | 添加书签到指定分组 |
+| `j rm <name>` | 删除书签 |
+| `j list` | 列出所有书签 |
+| `j list --group <group>` | 列出指定分组的书签 |
+| `j groups` | 列出所有分组 |
+
+### 📋 其他命令
+
+| 命令 | 说明 |
+|------|------|
+| `j <pattern>` | 模糊匹配并跳转 |
+| `j hist` | 查看跳转历史 |
+| `j recent` | 查看会话历史 |
+| `j -i` | 交互式选择（需安装 fzf） |
+| `j -e` | 编辑配置文件 |
+| `j ~` | 跳转到主目录 |
+
+## 🎯 匹配优先级
+
+```
+1️⃣  书签名称匹配（最高）
+    ↓
+2️⃣  书签路径匹配
+    ↓
+3️⃣  本地目录匹配
+    ↓
+4️⃣  会话历史匹配
 ```
 
-### cd 风格命令（完全替代 cd）
+## 💡 使用示例
 
 ```bash
-j ..                 # 跳转到父目录
-j /path              # 跳转到绝对路径
-j ../dir             # 跳转到相对路径
-j -                  # 返回上一个目录（等同于 cd -）
-j --back / j -b      # 返回上一次跳转的目录
-```
+# 📁 目录跳转
+j ..                 # 父目录
+j /Users             # 绝对路径
+j ../var             # 相对路径
+j -b                 # 返回上次跳转
 
-### 书签管理
-
-```bash
-j add <name>                     # 添加书签（当前目录）
-j add <name> --group <group>     # 添加书签到指定分组
-j rm <name>                      # 删除书签
-j list                           # 列出所有书签
-j list --group <group>           # 列出指定分组的书签
-j groups                         # 列出所有分组
-```
-
-### 其他命令
-
-```bash
-j hist               # 查看跳转历史
-j -i                 # 交互式选择（需安装 fzf）
-j -e                 # 编辑配置文件
-```
-
-## 匹配优先级
-
-1. **书签名称匹配**（最高优先级）
-2. **书签路径匹配**
-3. **本地目录匹配**（当前目录下的子目录）
-4. **会话历史匹配**
-
-## 配置
-
-配置文件位置：
-- Linux: `~/.config/ccd/`
-- macOS: `~/Library/Application Support/ccd/`
-
-文件说明：
-- `bookmarks.json` - 书签数据
-- `history.json` - 跳转历史
-
-可以直接编辑 `bookmarks.json` 或使用 `j -e` 命令打开编辑器修改。
-
-## 示例
-
-```bash
-# cd 风格的目录跳转
-j ..                 # 跳转到父目录
-j /Users             # 跳转到绝对路径
-j ../var             # 跳转到相对路径
-j -                  # 返回上一个目录
-j -b                 # 返回上一次跳转的目录
-
-# 添加书签
-cd ~/Projects/myapp
-j add app
-
-# 添加带分组的书签
+# 🔖 书签管理
 cd ~/Projects/work
-j add project --group work
-j add doc --group work
+j add project --group work      # 添加带分组书签
 
 cd ~/Documents
-j add notes --group personal
+j add notes --group personal   # 个人书签
 
-# 列出所有书签（按分组显示）
-j list
+# 📋 查看书签
+j list                          # 列出所有书签
+j list --group work             # 按分组查看
+j groups                        # 查看所有分组
 
-# 查看所有分组
-j groups
-
-# 只查看 work 分组的书签
-j list --group work
-
-# 快速跳转
-j app                # 跳转到 ~/Projects/myapp
-j doc                # 跳转到本地 docs 目录
-j work               # 跳转到 work 分组中匹配的书签
-j                    # 查看会话历史
+# 🚀 快速跳转
+j proj                          # 模糊匹配书签
+j doc                           # 本地优先
 ```
 
-## 依赖
+## ⚙️ 配置
 
-- [fzf](https://github.com/junegunn/fzf)（交互式选择功能可选）
-- Rust 1.56+
+**配置文件位置：**
+- 🐧 Linux: `~/.config/ccd/`
+- 🍎 macOS: `~/Library/Application Support/ccd/`
 
-## License
+**文件说明：**
+- `bookmarks.json` - 📚 书签数据
+- `history.json` - 📝 跳转历史
 
-MIT
+可以直接编辑配置文件，或使用 `j -e` 打开编辑器修改。
+
+## 🔧 依赖
+
+| 依赖 | 说明 |
+|------|------|
+| [Rust](https://www.rust-lang.org/) 1.56+ | 编译环境 |
+| [fzf](https://github.com/junegunn/fzf) | 交互式选择（可选） |
+
+## 📄 License
+
+MIT License - 随意使用 🚀
+
+---
+
+<div align="center">
+  <p>Made with ❤️ by Rust</p>
+</div>
