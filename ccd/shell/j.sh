@@ -12,6 +12,36 @@ j() {
         return $?
     fi
 
+    # 处理 cd 风格的路径（直接替换 cd）
+    local arg="$1"
+    case "$arg" in
+        ..|.|\.\.|\.\.)
+            # j . 或 j .. 直接替换为 cd
+            eval "cd $arg"
+            return $?
+            ;;
+        ../*)
+            # j ../something -> cd ../something
+            eval "cd $arg"
+            return $?
+            ;;
+        ./)
+            # j ./something -> cd ./something
+            eval "cd $arg"
+            return $?
+            ;;
+        /*)
+            # 绝对路径 j /path -> cd /path
+            eval "cd $arg"
+            return $?
+            ;;
+        -)
+            # j - 返回上一个目录（与 cd - 相同）
+            cd -
+            return $?
+            ;;
+    esac
+
     # 获取当前工作目录
     local current_dir="$(pwd)"
 
