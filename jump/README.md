@@ -2,20 +2,22 @@
 
 # 🚀 j - 快速目录跳转工具
 
-<img src="img/icon.png" alt="j logo" width="128" height="128">
+<p><img src="img/icon.png" width="128" height="128" style="border-radius: 20%;"></p>
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Rust](https://img.shields.io/badge/Rust-1.56+-orange.svg)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-1.56+-orange.svg)](https://www.rust-lang.org)
 
-> ⚡ 让目录跳转像飞一样！j 是一个轻量级的命令行工具，结合书签管理和模糊匹配，让你的终端导航效率提升 10 倍。
+<p><i>⚡ 让目录跳转像飞一样！j 是一个轻量级的命令行工具，结合书签管理和模糊匹配，让你的终端导航效率提升 10 倍。</i></p>
 
 </div>
 
+---
+
 ## ✨ 特性
 
-| 特性 | 说明 |
-|------|------|
+| | |
+|:---|:---|
 | 🎯 **CD 替代** | 完全替代 `cd`，支持 `..`、`/path`、`-`、`--back` 等 |
 | 🔍 **模糊匹配** | FZF 风格的模糊搜索，输入即跳转 |
 | 🔖 **书签管理** | 保存常用目录，支持分组分类 |
@@ -23,14 +25,16 @@
 | 🗂️ **本地优先** | 优先匹配当前目录下的子目录 |
 | 🌈 **跨平台** | 支持 macOS 和 Linux |
 
+---
+
 ## ⚡ 快速开始
 
 ```bash
 # 1. 安装
 cargo install --path .
 
-# 2. 配置 shell 插件（添加到 ~/.zshrc）
-echo 'source /path/to/j/shell/j.sh' >> ~/.zshrc
+# 2. 配置 shell 插件
+echo 'source /path/to/jump/shell/j.sh' >> ~/.zshrc
 source ~/.zshrc
 
 # 3. 开始使用
@@ -41,36 +45,33 @@ j ..                 # 跳转到父目录
 j --back             # 返回
 ```
 
+---
+
 ## 📦 安装
 
-### 方式一：源码安装
+### 源码安装
 
 ```bash
 cargo install --path .
-```
-
-### 方式二：Homebrew (待支持)
-
-```bash
-brew install j
 ```
 
 ### Shell 插件配置
 
 > ⚠️ **重要**: cd 风格命令（`j ..`、`j --back` 等）需要加载 shell 插件才能工作。
 
-在 `~/.zshrc` 或 `~/.bashrc` 中添加：
-
 ```bash
-source /path/to/j/shell/j.sh
+# 添加到 ~/.zshrc
+source /path/to/jump/shell/j.sh
 ```
+
+---
 
 ## 🎮 使用指南
 
-### CD 风格命令（完全替代 cd）
+### CD 风格命令
 
 | 命令 | 说明 |
-|------|------|
+|:---|:---|
 | `j ..` | 跳转到父目录 |
 | `j /path` | 跳转到绝对路径 |
 | `j ../dir` | 跳转到相对路径 |
@@ -80,24 +81,25 @@ source /path/to/j/shell/j.sh
 ### 🔖 书签管理
 
 | 命令 | 说明 |
-|------|------|
-| `j add <name>` | 添加书签（当前目录） |
-| `j add <name> --group <group>` | 添加书签到指定分组 |
+|:---|:---|
+| `j add <name>` | 添加书签 |
+| `j add <name> --group <group>` | 添加到分组 |
 | `j rm <name>` | 删除书签 |
 | `j list` | 列出所有书签 |
-| `j list --group <group>` | 列出指定分组的书签 |
+| `j list --group <group>` | 按分组查看 |
 | `j groups` | 列出所有分组 |
 
 ### 📋 其他命令
 
 | 命令 | 说明 |
-|------|------|
-| `j <pattern>` | 模糊匹配并跳转 |
+|:---|:---|
+| `j <pattern>` | 模糊匹配跳转 |
 | `j hist` | 查看跳转历史 |
 | `j recent` | 查看会话历史 |
-| `j -i` | 交互式选择（需安装 fzf） |
+| `j -i` | 交互式选择 |
 | `j -e` | 编辑配置文件 |
-| `j ~` | 跳转到主目录 |
+
+---
 
 ## 🎯 匹配优先级
 
@@ -111,6 +113,8 @@ source /path/to/j/shell/j.sh
 4️⃣  会话历史匹配
 ```
 
+---
+
 ## 💡 使用示例
 
 ```bash
@@ -122,46 +126,45 @@ j -b                 # 返回上次跳转
 
 # 🔖 书签管理
 cd ~/Projects/work
-j add project --group work      # 添加带分组书签
+j add project --group work
 
 cd ~/Documents
-j add notes --group personal   # 个人书签
+j add notes --group personal
 
 # 📋 查看书签
-j list                          # 列出所有书签
-j list --group work             # 按分组查看
-j groups                        # 查看所有分组
+j list                          # 列出所有
+j list --group work            # 按分组
+j groups                       # 所有分组
 
 # 🚀 快速跳转
-j proj                          # 模糊匹配书签
-j doc                           # 本地优先
+j proj                          # 模糊匹配
 ```
+
+---
 
 ## ⚙️ 配置
 
 **配置文件位置：**
-- 🐧 Linux: `~/.config/ccd/`
-- 🍎 macOS: `~/Library/Application Support/ccd/`
+- 🐧 Linux: `~/.config/jump/`
+- 🍎 macOS: `~/Library/Application Support/jump/`
 
 **文件说明：**
 - `bookmarks.json` - 📚 书签数据
 - `history.json` - 📝 跳转历史
 
-可以直接编辑配置文件，或使用 `j -e` 打开编辑器修改。
+---
 
 ## 🔧 依赖
 
 | 依赖 | 说明 |
-|------|------|
+|:---|:---|
 | [Rust](https://www.rust-lang.org/) 1.56+ | 编译环境 |
-| [fzf](https://github.com/junegunn/fzf) | 交互式选择（可选） |
-
-## 📄 License
-
-MIT License - 随意使用 🚀
+| [fzf](https://github.com/junegunn/fzf) | 交互式选择（可选）|
 
 ---
 
 <div align="center">
-  <p>Made with ❤️ by Rust</p>
+
+**MIT License** · Made with ❤️ by Rust
+
 </div>
