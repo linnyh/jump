@@ -1,0 +1,13 @@
+# Build artifacts
+target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+
+# Backup files
+*.rs.bk
