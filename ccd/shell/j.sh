@@ -5,11 +5,25 @@
 # 确保 ~/.cargo/bin 在 PATH 中
 export PATH="$HOME/.cargo/bin:$PATH"
 
+# 记录上一次跳转的目录（用于 j --back）
+_J_LAST_JUMP_DIR=""
+
 j() {
     # 对于需要终端交互的命令，直接调用原始命令
     if [[ "$1" == "-e" ]] || [[ "$1" == "--edit" ]]; then
         command j "$@"
         return $?
+    fi
+
+    # 处理 j --back / j -b：返回上一次跳转的目录
+    if [[ "$1" == "--back" ]] || [[ "$1" == "-b" ]]; then
+        if [[ -n "$_J_LAST_JUMP_DIR" ]]; then
+            cd "$_J_LAST_JUMP_DIR"
+            return $?
+        else
+            echo "No previous jump directory" >&2
+            return 1
+        fi
     fi
 
     # 处理 cd 风格的路径（直接替换 cd）
@@ -70,11 +84,18 @@ j() {
 
     # 只有包含 cd 命令时才 eval
     if [[ "$result" == cd\ * ]]; then
+        # 提取目标目录并保存当前位置
+        local target_dir="${result:3}"
+        target_dir="${target_dir//\'/}"
+        target_dir="${target_dir//\"/}"
+
         # 执行 cd 命令并记录历史
         eval "$result"
         local cd_status=$?
 
         if [[ $cd_status -eq 0 ]]; then
+            # 记录上一次跳转的目录
+            _J_LAST_JUMP_DIR="$current_dir"
             # 记录到会话历史
             command j --record-current 2>/dev/null
         fi
