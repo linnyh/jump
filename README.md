@@ -45,30 +45,44 @@
 ### 安装
 
 ```bash
-# 方式一：Homebrew（推荐）
-brew install linnyh/tap/jump
+# 方式一：下载预编译二进制（推荐，无需编译）
+curl -L https://github.com/linnyh/jump/releases/download/v0.1.0/j -o /usr/local/bin/j
+chmod +x /usr/local/bin/j
 
-# 方式二：源码安装
+curl -L https://github.com/linnyh/jump/releases/download/v0.1.0/j.sh -o /usr/local/bin/j.sh
+echo 'source /usr/local/bin/j.sh' >> ~/.zshrc
+source ~/.zshrc
+
+# 方式二：Homebrew
+brew install linnyh/tap/jump
+echo 'source $(brew --prefix)/opt/jump/share/jump/j.sh' >> ~/.zshrc
+source ~/.zshrc
+
+# 方式三：源码安装
 git clone https://github.com/linnyh/jump.git
 cd jump
 cargo install --locked --path .
 ```
 
+---
+
 ### 配置 Shell 插件
 
 > ⚠️ **重要**: cd 风格命令（`j ..`、`j --back` 等）需要加载 shell 插件才能工作。
 
-**Homebrew 安装后：**
-```bash
-# 添加到 ~/.zshrc
-echo 'source $(brew --prefix)/opt/jump/share/jump/j.sh' >> ~/.zshrc
-source ~/.zshrc
-```
+根据你的安装方式选择对应的配置：
 
-**源码安装后：**
 ```bash
-# 添加到 ~/.zshrc（请根据实际路径修改）
+# 方式一：预编译二进制安装
+echo 'source /usr/local/bin/j.sh' >> ~/.zshrc
+
+# 方式二：Homebrew 安装
+echo 'source $(brew --prefix)/opt/jump/share/jump/j.sh' >> ~/.zshrc
+
+# 方式三：源码安装
 echo 'source /path/to/jump/shell/j.sh' >> ~/.zshrc
+
+# 最后加载配置
 source ~/.zshrc
 ```
 
