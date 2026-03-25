@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 j - 快速目录跳转工具
+# 🚀 Jump 快速目录跳转工具
 
 <img src="img/icon.png" width="128" height="128" style="border-radius: 20%;">
 
