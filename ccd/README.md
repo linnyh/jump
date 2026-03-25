@@ -2,6 +2,23 @@
 
 一个轻量级的命令行工具，用于快速跳转到常用目录。结合书签管理和模糊匹配，让目录跳转变得高效便捷。
 
+## 快速开始
+
+```bash
+# 1. 安装
+cargo install --path .
+
+# 2. 配置 shell 插件（添加到 ~/.zshrc）
+source /path/to/j/shell/j.sh
+
+# 3. 使用
+cd ~/Projects/myapp
+j add myapp          # 添加书签
+j myapp              # 快速跳转回来
+j ..                 # 跳转到父目录
+j --back             # 返回
+```
+
 ## 功能特性
 
 - **cd 替代**: 完全替代 cd，支持 `..`、`/path`、`-`、`--back` 等
@@ -14,19 +31,23 @@
 
 ## 安装
 
-### 从源码安装
+### 1. 安装二进制
 
 ```bash
 cargo install --path .
 ```
 
-### Shell 插件（可选）
+### 2. 配置 Shell 插件
+
+**重要**: cd 风格命令（`j ..`、`j --back` 等）需要加载 shell 插件才能工作。
 
 在 `~/.zshrc` 或 `~/.bashrc` 中添加：
 
 ```bash
 source /path/to/j/shell/j.sh
 ```
+
+插件会自动将 `j` 命令设为 `cd` 的替代品。
 
 ## 使用方法
 
@@ -76,9 +97,15 @@ j -e                 # 编辑配置文件
 
 ## 配置
 
-配置文件位于 `~/.config/ccd/` 目录：
+配置文件位置：
+- Linux: `~/.config/ccd/`
+- macOS: `~/Library/Application Support/ccd/`
+
+文件说明：
 - `bookmarks.json` - 书签数据
 - `history.json` - 跳转历史
+
+可以直接编辑 `bookmarks.json` 或使用 `j -e` 命令打开编辑器修改。
 
 ## 示例
 
