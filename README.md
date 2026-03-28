@@ -104,16 +104,16 @@ j -b                 # --back 的简写
 ```bash
 # 添加书签
 cd ~/Projects/myapp
-j add myapp                    # 添加书签，名称为 myapp
-j add work --group personal    # 添加到 personal 分组
+j -a myapp                    # 添加书签，名称为 myapp
+j -a work --group personal    # 添加到 personal 分组
 
 # 查看书签
-j list                         # 列出所有书签
+j -l                         # 列出所有书签
 j list --group personal        # 只查看 personal 分组的书签
-j groups                       # 列出所有分组
+j -g                          # 列出所有分组
 
 # 删除书签
-j rm myapp                     # 删除名为 myapp 的书签
+j -d myapp                     # 删除名为 myapp 的书签
 ```
 
 ### 🔍 模糊跳转
@@ -129,12 +129,12 @@ j                    # 不带参数：显示会话历史
 
 ```bash
 j ~                  # 跳转到主目录
-j hist               # 查看跳转历史
-j recent             # 查看会话历史
+j -H                 # 查看跳转历史
+j -r                 # 查看会话历史
 j -i                 # 交互式选择（有 fzf 用 fzf，否则用编号选择）
 j -e                 # 用编辑器打开配置文件
-j root            # 列出所有项目根目录（.git、Cargo.toml 等）
-j root myapp       # 跳转到指定项目根目录
+j -R                 # 列出所有项目根目录（.git、Cargo.toml 等）
+j -R myapp           # 跳转到指定项目根目录
 j --help             # 显示帮助信息
 ```
 

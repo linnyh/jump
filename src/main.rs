@@ -32,53 +32,38 @@ struct Cli {
     /// Session history mode
     #[arg(short, long)]
     recent: bool,
+    /// Add a bookmark for the current directory
+    #[arg(short = 'a', long)]
+    add: Option<String>,
+    /// Group for the bookmark
+    #[arg(long)]
+    group: Option<String>,
+    /// Remove a bookmark
+    #[arg(short = 'd', long)]
+    rm: Option<String>,
+    /// List all bookmarks
+    #[arg(short = 'l', long)]
+    list: bool,
+    /// Show all groups
+    #[arg(short = 'g', long)]
+    groups: bool,
+    /// Show jump history
+    #[arg(short = 'H', long)]
+    hist: bool,
     /// Return to previous jump location (shell plugin)
     #[arg(short = 'b', long)]
     back: bool,
+    /// Jump to project root (auto-detect .git, Cargo.toml, etc.)
+    #[arg(short = 'R', long)]
+    root: bool,
     /// Record current directory to session history (internal use)
     #[arg(long, hide = true)]
     record_current: bool,
     /// Current working directory (set by shell plugin)
     #[arg(long, hide = true, value_name = "DIR")]
     cwd: Option<String>,
-    #[command(subcommand)]
-    command: Option<Command>,
     /// Jump to directory matching pattern
     pattern: Option<String>,
-}
-
-#[derive(Parser, Debug)]
-enum Command {
-    /// Add a bookmark for the current directory
-    Add {
-        name: String,
-        /// Group to organize the bookmark
-        #[arg(short, long)]
-        group: Option<String>,
-    },
-    /// Remove a bookmark
-    Rm {
-        name: String,
-    },
-    /// List all bookmarks
-    List {
-        /// Filter by group
-        #[arg(short, long)]
-        group: Option<String>,
-    },
-    /// Show session history and allow selection
-    Hist,
-    /// Show jump history
-    History,
-    /// Show all groups
-    Groups,
-    /// Show session history and allow selection
-    Recent,
-    /// Jump to project root (auto-detect .git, Cargo.toml, etc.)
-    Root {
-        /// Project name pattern (optional)
-        pattern: Option<String>,
-    },
 }
 
 fn main() {
@@ -100,6 +85,37 @@ fn main() {
         return;
     }
 
+    // 获取 shell 传入的 cwd
+    let shell_cwd = cli.cwd.clone();
+
+    // -R 选项：项目根目录
+    if cli.root {
+        let cwd = shell_cwd
+            .as_ref()
+            .map(|p| std::path::PathBuf::from(p))
+            .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+
+        let roots = list_project_roots(&cwd);
+        if let Some(pattern) = &cli.pattern {
+            if let Some(root) = fuzzy_match_projects(pattern, &roots) {
+                println!("{}", crate::core::jumper::generate_cd_script(&root.to_string_lossy()));
+            } else {
+                eprintln!("No matching project found");
+                std::process::exit(1);
+            }
+        } else {
+            if roots.is_empty() {
+                println!("No project roots found");
+            } else {
+                println!("Project roots:\n");
+                for (i, root) in roots.iter().enumerate() {
+                    println!("  {}: {}", i + 1, root.display());
+                }
+            }
+        }
+        return;
+    }
+
     // 记录当前目录到会话历史
     if cli.record_current {
         if let Ok(cwd) = std::env::current_dir() {
@@ -108,9 +124,6 @@ fn main() {
         }
         return;
     }
-
-    // 获取 shell 传入的 cwd（如果有）
-    let shell_cwd = cli.cwd.clone();
 
     if cli.recent {
         // -r 选项
@@ -128,79 +141,55 @@ fn main() {
         return;
     }
 
-    match cli.command {
-        Some(Command::Add { name, group }) => {
-            AddCommand { name, group }.execute(&config).unwrap();
+    // -a 选项：添加书签
+    if let Some(name) = &cli.add {
+        AddCommand {
+            name: name.clone(),
+            group: cli.group.clone(),
         }
-        Some(Command::Rm { name }) => {
-            RmCommand { name }.execute(&config).unwrap();
-        }
-        Some(Command::List { group }) => {
-            ListCommand { group }.execute(&config).unwrap();
-        }
-        Some(Command::Hist) | Some(Command::History) => {
-            HistCommand.execute(&config).unwrap();
-        }
-        Some(Command::Groups) => {
-            list_groups(&config).unwrap();
-        }
-        Some(Command::Recent) => {
-            if let Some(pattern) = &cli.pattern {
-                let result = crate::commands::recent::fuzzy_match_session_history(pattern);
-                if let Some(path) = result {
-                    println!("{}", crate::core::jumper::generate_cd_script(&path));
-                } else {
-                    eprintln!("No matching path in session history");
-                    std::process::exit(1);
-                }
-            } else {
-                print_session_history();
-            }
-        }
-        Some(Command::Root { pattern }) => {
-            let cwd = shell_cwd
-                .as_ref()
-                .map(|p| std::path::PathBuf::from(p))
-                .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+        .execute(&config)
+        .unwrap();
+        return;
+    }
 
-            if let Some(pat) = &pattern {
-                // 模糊匹配项目根目录
-                let roots = list_project_roots(&cwd);
-                if let Some(root) = fuzzy_match_projects(pat, &roots) {
-                    println!("{}", crate::core::jumper::generate_cd_script(&root.to_string_lossy()));
-                } else {
-                    eprintln!("No matching project found");
-                    std::process::exit(1);
-                }
-            } else {
-                // 列出所有找到的项目根目录
-                let roots = list_project_roots(&cwd);
-                if roots.is_empty() {
-                    println!("No project roots found");
-                } else {
-                    println!("Project roots:\n");
-                    for (i, root) in roots.iter().enumerate() {
-                        println!("  {}: {}", i + 1, root.display());
-                    }
-                }
-            }
+    // -d 选项：删除书签
+    if let Some(name) = &cli.rm {
+        RmCommand { name: name.clone() }.execute(&config).unwrap();
+        return;
+    }
+
+    // -l 选项：列出书签
+    if cli.list {
+        ListCommand { group: cli.group.clone() }.execute(&config).unwrap();
+        return;
+    }
+
+    // -g 选项：列出分组
+    if cli.groups {
+        list_groups(&config).unwrap();
+        return;
+    }
+
+    // -H 选项：显示历史
+    if cli.hist {
+        HistCommand.execute(&config).unwrap();
+        return;
+    }
+
+    // 无特殊选项，执行普通跳转或显示历史
+    if let Some(pattern) = &cli.pattern {
+        // JumpCommand 会依次匹配：本地目录 → 书签 → 会话历史
+        JumpCommand {
+            pattern: Some(pattern.clone()),
+            cwd: shell_cwd,
         }
-        None => {
-            if let Some(pattern) = &cli.pattern {
-                // JumpCommand 会依次匹配：本地目录 → 书签 → 会话历史
-                JumpCommand {
-                    pattern: Some(pattern.clone()),
-                    cwd: shell_cwd,
-                }
-                .execute(&config)
-                .unwrap_or_else(|e| {
-                    eprintln!("{}", e);
-                    std::process::exit(1);
-                });
-            } else {
-                // 无参数，显示会话历史
-                print_session_history();
-            }
-        }
+        .execute(&config)
+        .unwrap_or_else(|e| {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        });
+    } else {
+        // 无参数，显示会话历史
+        print_session_history();
     }
 }

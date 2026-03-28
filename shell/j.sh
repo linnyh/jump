@@ -121,16 +121,7 @@ _j_get_bookmarks() {
 
 # Tab 补全
 _j() {
-    local -a commands bookmarks
-    commands=(
-        "add:Add bookmark for current directory"
-        "rm:Remove a bookmark"
-        "list:List all bookmarks"
-        "groups:List all bookmark groups"
-        "hist:Show jump history"
-        "recent:Show session history"
-        "root:Jump to project root"
-    )
+    local -a bookmarks dirs
 
     local curcontext="$curcontext" state line
     typeset -A opt_args
@@ -140,27 +131,29 @@ _j() {
         '(-i --interactive)'{-i,--interactive}'[interactive selection]' \
         '(-e --edit)'{-e,--edit}'[open config file]' \
         '(-r --recent)'{-r,--recent}'[session history mode]' \
+        '(-a --add)'{-a,--add}'[add bookmark]:bookmark name:' \
+        '(-d --rm)'{-d,--rm}'[remove bookmark]:bookmark name:' \
+        '(-l --list)'{-l,--list}'[list bookmarks]' \
+        '(-g --groups)'{-g,--groups}'[list groups]' \
+        '(-H --hist)'{-H,--hist}'[show history]' \
+        '(-R --root)'{-R,--root}'[jump to project root]' \
         '(-b --back)'{-b,--back}'[return to previous jump]' \
-        '1: :->command' \
-        '*: :->args'
+        '--group[group for bookmark]:group name:' \
+        '1:pattern:->pattern' \
+        '*:args:->args'
 
     case $state in
-        command)
-            # 第一个参数：子命令或书签名
-            bookmarks=($(_j_get_bookmarks))
-            _describe 'command' commands && _describe 'bookmark' bookmarks
-            ;;
-        args)
-            case $words[1] in
-                add|rm)
-                    _message "bookmark name"
-                    ;;
-                list)
-                    _arguments '(-g --group)'{-g,--group}'[filter by group]'
-                    ;;
-                *)
-                    ;;
-            esac
+        pattern)
+            # 获取书签（值:显示文本 格式）
+            local -a bm_list
+            for bm in $(_j_get_bookmarks 2>/dev/null); do
+                bm_list+=("${bm}:🔖 ${bm}")
+            done
+            # 获取当前目录下的子目录
+            dirs=($(ls -d */ 2>/dev/null | sed 's#/##'))
+            # 补全
+            [[ ${#dirs[@]} -gt 0 ]] && _describe 'local' dirs
+            [[ ${#bm_list[@]} -gt 0 ]] && _describe 'bookmark' bm_list
             ;;
     esac
 }
