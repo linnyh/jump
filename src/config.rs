@@ -8,7 +8,7 @@ impl Config {
     pub fn new() -> Self {
         let config_dir = dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join("ccd");
+            .join("jump");
         Self { config_dir }
     }
 
@@ -46,7 +46,7 @@ mod tests {
     #[test]
     fn test_config_dir() {
         let config = Config::new();
-        assert!(config.config_dir().ends_with("ccd"));
+        assert!(config.config_dir().ends_with("jump"));
     }
 
     #[test]

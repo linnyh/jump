@@ -107,6 +107,7 @@ fn find_best_bookmark_match(
 ) -> Option<(u32, String)> {
     let mut best_score = 0u32;
     let mut best_path = None;
+    let pattern_lower = pattern.to_lowercase();
 
     for (name, entry) in &bookmarks.bookmarks {
         // 先匹配书签名称
@@ -115,11 +116,18 @@ fn find_best_bookmark_match(
         // 再匹配路径
         let path_score = matcher::fuzzy_score(pattern, &entry.path);
 
+        // 关键修复：如果书签名称以 pattern 开头（不区分大小写），给予强优先
+        let name_prefix_bonus = if name.to_lowercase().starts_with(&pattern_lower) {
+            500  // 名称前缀匹配远超任何路径得分
+        } else {
+            0
+        };
+
         // 取较高分，但书签名称优先
         let score = if name_score > 0 {
-            name_score * 2  // 书签名称权重更高
+            name_score * 2 + name_prefix_bonus  // 书签名称权重更高
         } else {
-            path_score
+            path_score + name_prefix_bonus
         };
 
         if score > best_score {
