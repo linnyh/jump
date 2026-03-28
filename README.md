@@ -4,7 +4,7 @@
 
 <img src="img/icon.png" width="128" height="128" style="border-radius: 20%;">
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/linnyh/jump)
+[![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)](https://github.com/linnyh/jump)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.56+-orange.svg)](https://www.rust-lang.org)
 
@@ -35,10 +35,10 @@
 ### 方式一：下载预编译二进制（推荐）
 
 ```bash
-curl -L https://github.com/linnyh/jump/releases/download/v0.1.0/j -o /usr/local/bin/j
+curl -L https://github.com/linnyh/jump/releases/download/v0.1.1/j -o /usr/local/bin/j
 chmod +x /usr/local/bin/j
 
-curl -L https://github.com/linnyh/jump/releases/download/v0.1.0/j.sh -o /usr/local/bin/j.sh
+curl -L https://github.com/linnyh/jump/releases/download/v0.1.1/j.sh -o /usr/local/bin/j.sh
 echo 'source /usr/local/bin/j.sh' >> ~/.zshrc
 source ~/.zshrc
 ```
