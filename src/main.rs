@@ -4,8 +4,9 @@ mod core;
 
 use clap::Parser;
 use commands::{
-    add_to_history, list_groups, print_session_history, AddCommand, EditCommand,
-    HistCommand, InteractiveCommand, JumpCommand, ListCommand, RmCommand,
+    add_to_history, fuzzy_match_projects, list_groups, list_project_roots,
+    print_session_history, AddCommand, EditCommand, HistCommand, InteractiveCommand,
+    JumpCommand, ListCommand, RmCommand,
 };
 use config::Config;
 
@@ -73,6 +74,11 @@ enum Command {
     Groups,
     /// Show session history and allow selection
     Recent,
+    /// Jump to project root (auto-detect .git, Cargo.toml, etc.)
+    Root {
+        /// Project name pattern (optional)
+        pattern: Option<String>,
+    },
 }
 
 fn main() {
@@ -149,6 +155,34 @@ fn main() {
                 }
             } else {
                 print_session_history();
+            }
+        }
+        Some(Command::Root { pattern }) => {
+            let cwd = shell_cwd
+                .as_ref()
+                .map(|p| std::path::PathBuf::from(p))
+                .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+
+            if let Some(pat) = &pattern {
+                // 模糊匹配项目根目录
+                let roots = list_project_roots(&cwd);
+                if let Some(root) = fuzzy_match_projects(pat, &roots) {
+                    println!("{}", crate::core::jumper::generate_cd_script(&root.to_string_lossy()));
+                } else {
+                    eprintln!("No matching project found");
+                    std::process::exit(1);
+                }
+            } else {
+                // 列出所有找到的项目根目录
+                let roots = list_project_roots(&cwd);
+                if roots.is_empty() {
+                    println!("No project roots found");
+                } else {
+                    println!("Project roots:\n");
+                    for (i, root) in roots.iter().enumerate() {
+                        println!("  {}: {}", i + 1, root.display());
+                    }
+                }
             }
         }
         None => {

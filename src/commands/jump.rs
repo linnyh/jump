@@ -95,7 +95,14 @@ impl JumpCommand {
             return Ok(());
         }
 
-        // 5. 都没匹配到，返回错误
+        // 5. 查找项目根目录（.git, Cargo.toml 等）
+        let roots = crate::commands::project::list_project_roots(&search_dir);
+        if let Some(root) = crate::commands::project::fuzzy_match_projects(&pattern, &roots) {
+            println!("{}", crate::core::jumper::generate_cd_script(&root.to_string_lossy()));
+            return Ok(());
+        }
+
+        // 6. 都没匹配到，返回错误
         Err("No matching directory found".to_string())
     }
 }
@@ -104,8 +111,8 @@ impl JumpCommand {
 fn find_best_bookmark_match(
     bookmarks: &crate::core::storage::Bookmarks,
     pattern: &str,
-) -> Option<(u32, String)> {
-    let mut best_score = 0u32;
+) -> Option<(i64, String)> {
+    let mut best_score = 0i64;
     let mut best_path = None;
     let pattern_lower = pattern.to_lowercase();
 
@@ -140,8 +147,8 @@ fn find_best_bookmark_match(
 }
 
 /// 查找最佳本地目录匹配，返回 (得分, 完整路径)
-fn find_best_local_match(dir: &std::path::Path, pattern: &str) -> Option<(u32, String)> {
-    let mut best_score = 0u32;
+fn find_best_local_match(dir: &std::path::Path, pattern: &str) -> Option<(i64, String)> {
+    let mut best_score = 0i64;
     let mut best_path = None;
 
     if let Ok(entries) = fs::read_dir(dir) {

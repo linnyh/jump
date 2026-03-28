@@ -26,11 +26,6 @@ impl Bookmarks {
     }
 
     #[cfg(test)]
-    pub fn get(&self, name: &str) -> Option<&BookmarkEntry> {
-        self.bookmarks.get(name)
-    }
-
-    #[cfg(test)]
     pub fn get_path(&self, name: &str) -> Option<String> {
         self.bookmarks.get(name).map(|e| e.path.clone())
     }

@@ -19,21 +19,27 @@ cargo install --force # 安装/更新到 ~/.cargo/bin
 ### 核心模块
 
 - `src/main.rs` — CLI 入口，使用 clap 解析参数
-- `src/core/jumper.rs` — 生成 `cd /path` 输出、路径验证
-- `src/core/matcher.rs` — FZF 风格的模糊匹配算法（`fuzzy_score`）
+- `src/core/jumper.rs` — 生成 `cd /path` 输出
+- `src/core/matcher.rs` — 模糊匹配（基于 `fuzzy-matcher` crate）
 - `src/core/storage.rs` — 书签和历史的持久化（JSON）
-- `src/commands/` — 各子命令实现（jump, add, rm, list 等）
+- `src/commands/` — 各子命令实现（jump, add, rm, list, project 等）
 
 ### 关键设计
 
 **Jump 匹配顺序**（`src/commands/jump.rs`）：
 1. 本地目录匹配（当前目录下的子目录）
-2. 书签匹配（名称 x2 权重，路径匹配，名称前缀 +500 bonus）
+2. 书签匹配（名称 x2 权重，名称前缀 +500 bonus）
 3. 会话历史匹配
+4. 项目根目录匹配（向上查找 .git、Cargo.toml 等）
+
+**项目根目录检测**（`src/commands/project.rs`）：
+- 支持：.git, Cargo.toml, package.json, go.mod, pyproject.toml, pom.xml, build.gradle, CMakeLists.txt, Makefile, .svn, .hg
+- `j root` 列出所有找到的项目根目录
+- `j root <pattern>` 模糊匹配并跳转
 
 **配置目录**（`src/config.rs`）：
-- macOS: `~/Library/Application Support/ccd/`
-- Linux: `~/.config/ccd/`
+- macOS: `~/Library/Application Support/jump/`
+- Linux: `~/.config/jump/`
 - 包含 `bookmarks.json` 和 `history.json`
 
 **Shell 插件**（`shell/j.sh`）：

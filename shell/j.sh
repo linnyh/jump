@@ -129,6 +129,7 @@ _j() {
         "groups:List all bookmark groups"
         "hist:Show jump history"
         "recent:Show session history"
+        "root:Jump to project root"
     )
 
     local curcontext="$curcontext" state line

@@ -1,78 +1,54 @@
+use fuzzy_matcher::skim::SkimMatcherV2;
+use fuzzy_matcher::FuzzyMatcher;
+
 /// FZF 风格的模糊匹配评分
 /// 返回得分：0 表示不匹配，正数表示匹配程度
-pub fn fuzzy_score(input: &str, target: &str) -> u32 {
-    let input_chars: Vec<char> = input.to_lowercase().chars().collect();
-    let target_chars: Vec<char> = target.to_lowercase().chars().collect();
-
-    if input_chars.is_empty() {
-        return 0;
-    }
-
-    let mut score: u32 = 0;
-    let mut input_idx = 0;
-    let mut prev_match_idx: Option<usize> = None;
-    let mut consecutive_bonus = 0;
-
-    for (target_idx, tc) in target_chars.iter().enumerate() {
-        if input_idx >= input_chars.len() {
-            break;
-        }
-
-        if *tc == input_chars[input_idx] {
-            score += 10;
-            input_idx += 1;
-
-            if let Some(prev) = prev_match_idx {
-                if target_idx == prev + 1 {
-                    consecutive_bonus += 5;
-                    score += consecutive_bonus;
-                } else {
-                    consecutive_bonus = 0;
-                }
-            }
-
-            if target_idx == 0 {
-                score += 15;
-            }
-
-            if target_idx > 0 && target_chars[target_idx - 1] == '/' {
-                score += 8;
-            }
-
-            prev_match_idx = Some(target_idx);
-        }
-    }
-
-    if input_idx < input_chars.len() {
-        return 0;
-    }
-
-    if target.len() > input.len() * 3 {
-        score = score.saturating_sub(5);
-    }
-
-    score
+pub fn fuzzy_score(input: &str, target: &str) -> i64 {
+    let matcher = SkimMatcherV2::default();
+    matcher.fuzzy_match(target, input).unwrap_or(0)
 }
 
 #[derive(Debug, Clone)]
 pub struct MatchResult {
     pub path: String,
-    pub score: u32,
+    pub score: i64,
 }
 
 pub fn fuzzy_match(input: &str, candidates: &[&str]) -> Vec<MatchResult> {
+    let matcher = SkimMatcherV2::default();
     let mut results: Vec<MatchResult> = candidates
         .iter()
         .filter_map(|&path| {
-            let score = fuzzy_score(input, path);
-            if score > 0 {
-                Some(MatchResult {
+            matcher.fuzzy_match(path, input).map(|score| MatchResult {
+                path: path.to_string(),
+                score,
+            })
+        })
+        .collect();
+
+    results.sort_by(|a, b| b.score.cmp(&a.score));
+    results
+}
+
+/// 带频率加成的模糊匹配（备用，目前用于测试验证）
+#[allow(dead_code)]
+pub fn fuzzy_match_with_frequency(
+    input: &str,
+    candidates: &[(&str, u32)],
+) -> Vec<MatchResult> {
+    let matcher = SkimMatcherV2::default();
+    let mut results: Vec<MatchResult> = candidates
+        .iter()
+        .filter_map(|&(path, freq)| {
+            matcher.fuzzy_match(path, input).map(|score| {
+                // 频率加成：访问次数越多，额外加分越多（最多 +100）
+                let freq_bonus = ((freq as f64).log2() * 10.0) as i64;
+                let total_score = score + freq_bonus;
+                MatchResult {
                     path: path.to_string(),
-                    score,
-                })
-            } else {
-                None
-            }
+                    score: total_score,
+                }
+            })
         })
         .collect();
 
@@ -86,16 +62,21 @@ mod tests {
 
     #[test]
     fn test_exact_match_high_score() {
-        let score = fuzzy_score("project", "project");
+        let exact = fuzzy_score("project", "project");
         let partial = fuzzy_score("proj", "project");
-        assert!(score > partial);
+        assert!(exact > partial, "exact={}, partial={}", exact, partial);
     }
 
     #[test]
     fn test_consecutive_match_bonus() {
         let consecutive = fuzzy_score("pro", "project");
         let scattered = fuzzy_score("prj", "project");
-        assert!(consecutive > scattered);
+        assert!(
+            consecutive > scattered,
+            "consecutive={}, scattered={}",
+            consecutive,
+            scattered
+        );
     }
 
     #[test]
@@ -107,6 +88,22 @@ mod tests {
     #[test]
     fn test_camel_case_match() {
         let score = fuzzy_score("MP", "MyProject");
-        assert!(score > 0);
+        assert!(score > 0, "score={}", score);
+    }
+
+    #[test]
+    fn test_frequency_bonus() {
+        // 相同匹配下，频率高的应该得分更高
+        let candidates = vec![
+            ("/path/a", 1u32),
+            ("/path/b", 10),
+            ("/path/c", 100),
+        ];
+        let results = fuzzy_match_with_frequency("path", &candidates);
+        assert!(!results.is_empty());
+        // 频率最高的应该在前面
+        assert_eq!(results[0].path, "/path/c");
+        assert_eq!(results[1].path, "/path/b");
+        assert_eq!(results[2].path, "/path/a");
     }
 }
