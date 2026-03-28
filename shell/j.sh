@@ -109,9 +109,19 @@ _j_record() {
     command j --record-current 2>/dev/null
 }
 
-# Tab 补全 (仅 zsh，延迟加载避免兼容性问题)
+# 获取书签列表（供补全用）
+_j_get_bookmarks() {
+    local config_dir="${HOME}/Library/Application Support/jump"
+    [[ -f "${config_dir}/bookmarks.json" ]] || config_dir="${HOME}/.config/jump"
+    [[ -f "${config_dir}/bookmarks.json" ]] || return
+
+    # 提取书签名称（JSON 中的 key）
+    grep -o '"[^"]*"\s*:' "${config_dir}/bookmarks.json" 2>/dev/null | tr -d '":' | tr -d ' '
+}
+
+# Tab 补全
 _j() {
-    local -a commands
+    local -a commands bookmarks
     commands=(
         "add:Add bookmark for current directory"
         "rm:Remove a bookmark"
@@ -120,10 +130,39 @@ _j() {
         "hist:Show jump history"
         "recent:Show session history"
     )
-    _describe 'command' commands
+
+    local curcontext="$curcontext" state line
+    typeset -A opt_args
+
+    # 解析已输入的内容
+    _arguments -C \
+        '(-i --interactive)'{-i,--interactive}'[interactive selection]' \
+        '(-e --edit)'{-e,--edit}'[open config file]' \
+        '(-r --recent)'{-r,--recent}'[session history mode]' \
+        '(-b --back)'{-b,--back}'[return to previous jump]' \
+        '1: :->command' \
+        '*: :->args'
+
+    case $state in
+        command)
+            # 第一个参数：子命令或书签名
+            bookmarks=($(_j_get_bookmarks))
+            _describe 'command' commands && _describe 'bookmark' bookmarks
+            ;;
+        args)
+            case $words[1] in
+                add|rm)
+                    _message "bookmark name"
+                    ;;
+                list)
+                    _arguments '(-g --group)'{-g,--group}'[filter by group]'
+                    ;;
+                *)
+                    ;;
+            esac
+            ;;
+    esac
 }
 
-# 安全地注册补全函数
-if [[ -n "$ZSH_VERSION" ]] && [[ -f /usr/share/zsh/site-functions/_j ]]; then
-    compdef _j j 2>/dev/null
-fi
+# 注册补全函数
+compdef _j j 2>/dev/null
