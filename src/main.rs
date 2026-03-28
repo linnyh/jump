@@ -13,6 +13,13 @@ use config::Config;
 #[derive(Parser, Debug)]
 #[command(name = "j")]
 #[command(version = "0.1.0")]
+#[command(before_help = "\
+╭─────────────────────────────────────╮
+│                                     │
+│   Lightning Fast Directory Jumper   │
+│                                     │
+╰─────────────────────────────────────╯
+")]
 #[command(after_help = "\
 CD-Style Commands (handled by shell plugin):
   j ..              Jump to parent directory
