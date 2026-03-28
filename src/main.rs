@@ -12,7 +12,7 @@ use config::Config;
 
 #[derive(Parser, Debug)]
 #[command(name = "j")]
-#[command(version = "0.1.0")]
+#[command(version = "0.1.1")]
 #[command(before_help = "\
 ╭─────────────────────────────────────╮
 │                                     │
