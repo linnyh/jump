@@ -1,5 +1,3 @@
-use std::path::Path;
-
 pub fn generate_cd_script(path: &str) -> String {
     format!("cd {}", shell_escape(path))
 }
@@ -10,24 +8,6 @@ fn shell_escape(path: &str) -> String {
     }
     let escaped = path.replace('\'', "'\\''");
     format!("'{}'", escaped)
-}
-
-#[allow(dead_code)]
-pub fn validate_path(path: &str) -> bool {
-    Path::new(path).is_dir()
-}
-
-#[allow(dead_code)]
-pub fn select_best_match(matches: &[super::matcher::MatchResult]) -> Option<&str> {
-    if matches.is_empty() {
-        return None;
-    }
-    for m in matches {
-        if validate_path(&m.path) {
-            return Some(&m.path);
-        }
-    }
-    Some(&matches[0].path)
 }
 
 #[cfg(test)]

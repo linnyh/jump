@@ -62,10 +62,6 @@ impl Bookmarks {
         self.groups.iter().collect()
     }
 
-    pub fn values(&self) -> Vec<&BookmarkEntry> {
-        self.bookmarks.values().collect()
-    }
-
     #[cfg(test)]
     pub fn len(&self) -> usize {
         self.bookmarks.len()
