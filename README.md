@@ -15,18 +15,6 @@
 
 ---
 
-## 为什么需要 jump ？
-
-在日常开发中，我们经常需要：
-
-- 在多个项目目录间频繁切换
-- 记住常用目录的路径
-- 快速跳转到深层嵌套的目录
-
-**j** 可以帮你解决这些问题，只需记住几个简单的命令。
-
----
-
 ## 特性
 
 | 特性 | 说明 |
@@ -36,52 +24,56 @@
 | 🔖 **书签系统** | 保存常用目录，支持分组管理 |
 | 📜 **会话历史** | 自动记录会话访问过的目录 |
 | ↩️ **返回功能** | `j --back` 一键返回上一次跳转的位置 |
+| 🌳 **项目根目录** | `j -R` 快速跳转到项目根目录 |
+| 🔢 **Tab 补全** | 智能补全，支持书签和本地目录 |
 | 🌈 **跨平台** | 支持 macOS 和 Linux |
 
 ---
 
-## 快速开始
+## 安装
 
-### 安装
+### 方式一：下载预编译二进制（推荐）
 
 ```bash
-# 方式一：下载预编译二进制（推荐，无需编译）
 curl -L https://github.com/linnyh/jump/releases/download/v0.1.0/j -o /usr/local/bin/j
 chmod +x /usr/local/bin/j
 
 curl -L https://github.com/linnyh/jump/releases/download/v0.1.0/j.sh -o /usr/local/bin/j.sh
 echo 'source /usr/local/bin/j.sh' >> ~/.zshrc
 source ~/.zshrc
+```
 
-# 方式二：Homebrew
+### 方式二：Homebrew
+
+```bash
 brew install linnyh/tap/jump
 echo 'source $(brew --prefix)/opt/jump/share/jump/j.sh' >> ~/.zshrc
 source ~/.zshrc
+```
 
-# 方式三：源码安装
+### 方式三：源码安装
+
+```bash
 git clone https://github.com/linnyh/jump.git
 cd jump
 cargo install --locked --path .
+echo 'source /path/to/jump/shell/j.sh' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 ---
 
-### 配置 Shell 插件
-
-根据你的安装方式选择对应的配置：
+## 快速开始
 
 ```bash
-# 方式一：预编译二进制安装
-echo 'source /usr/local/bin/j.sh' >> ~/.zshrc
-
-# 方式二：Homebrew 安装
-echo 'source $(brew --prefix)/opt/jump/share/jump/j.sh' >> ~/.zshrc
-
-# 方式三：源码安装
-echo 'source /path/to/jump/shell/j.sh' >> ~/.zshrc
-
-# 最后加载配置
-source ~/.zshrc
+j ..                 # 跳转到父目录
+j /path              # 跳转到绝对路径
+j -                  # 返回上一个目录
+j myapp              # 模糊跳转到书签或目录
+j -R                 # 列出所有项目根目录
+j -R myapp           # 跳转到项目根目录
+j -a myapp           # 添加书签
+j -l                 # 列出所有书签
 ```
 
 ---
@@ -109,12 +101,21 @@ j -a work --group personal    # 添加到 personal 分组
 
 # 查看书签
 j -l                         # 列出所有书签
-j list --group personal        # 只查看 personal 分组的书签
-j -g                          # 列出所有分组
+j -l --group personal        # 只查看 personal 分组的书签
+j -g                         # 列出所有分组
 
 # 删除书签
-j -d myapp                     # 删除名为 myapp 的书签
+j -d myapp                   # 删除名为 myapp 的书签
 ```
+
+### 🌳 项目根目录
+
+```bash
+j -R                 # 列出从当前目录向上查找到的所有项目根目录
+j -R myapp           # 模糊匹配并跳转到项目根目录
+```
+
+支持的项目标记：`.git`、`Cargo.toml`、`package.json`、`go.mod`、`pyproject.toml`、`pom.xml`、`build.gradle`、`CMakeLists.txt`、`Makefile` 等。
 
 ### 🔍 模糊跳转
 
@@ -128,13 +129,10 @@ j                    # 不带参数：显示会话历史
 ### 📋 其他命令
 
 ```bash
-j ~                  # 跳转到主目录
-j -H                 # 查看跳转历史
+j -H                 # 查看跳转历史（按访问频率排序）
 j -r                 # 查看会话历史
 j -i                 # 交互式选择（有 fzf 用 fzf，否则用编号选择）
 j -e                 # 用编辑器打开配置文件
-j -R                 # 列出所有项目根目录（.git、Cargo.toml 等）
-j -R myapp           # 跳转到指定项目根目录
 j --help             # 显示帮助信息
 ```
 
@@ -147,7 +145,7 @@ j --help             # 显示帮助信息
 当输入 `j proj` 时，j 按以下顺序匹配：
 
 ```
-1️⃣ 书签名称匹配（权重 x2 + 名称前缀 bonus）
+1️⃣ 书签名称匹配（权重 x2 + 名称前缀 +500 bonus）
    ↓ 如果匹配到 "proj" 或 "project" 书签
 2️⃣ 书签路径匹配
    ↓ 在书签路径中查找 "proj"
@@ -179,7 +177,7 @@ j --help             # 显示帮助信息
 
 ### 配置文件说明
 
-```bash
+```
 jump/
 ├── bookmarks.json    # 书签数据
 └── history.json      # 跳转历史
@@ -233,28 +231,19 @@ vim ~/Library/Application\ Support/jump/bookmarks.json
 执行: j --back       → 仍返回 /home/user/work (j 的跳转记录)
 ```
 
-### Q: 如何在书签中使用分组？
+### Q: 书签名称匹配有什么特殊规则？
 
-分组可以帮你组织书签：
+书签名称前缀匹配有 +500 的额外加分，远高于任何路径匹配分数。
 
-```bash
-# 添加带分组的书签
-cd ~/Projects/client-a
-j add client-a --group work
-
-cd ~/Documents/notes
-j add notes --group personal
-
-# 按分组查看
-j list --group work        # 只看 work 分组
-
-# 查看所有分组
-j groups
+```
+例如：Bookmark "ProjectThinking" -> /path/to/ProjectThinking
+输入 "proj" 匹配 "ProjectThinking" 会获得 +500 bonus
+输入 "pt" 也能匹配，因为它符合模糊匹配规则
 ```
 
 ### Q: 模糊匹配是如何工作的？
 
-j 使用类似 fzf 的模糊匹配算法：
+j 使用 fuzzy-matcher 算法：
 
 ```
 输入 "myapp" 可以匹配：
@@ -262,6 +251,14 @@ j 使用类似 fzf 的模糊匹配算法：
 - my-app         ✓ 模糊匹配
 - m_y_a_p_p      ✓ 首字母匹配
 - mp             ✓ 子序列匹配
+```
+
+### Q: 如何实现交互式选择？
+
+j 优先使用 fzf 进行交互式选择。如果系统未安装 fzf，会自动降级为编号选择器：
+
+```bash
+j -i                 # 交互式选择书签和目录
 ```
 
 ---
