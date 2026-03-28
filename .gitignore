@@ -12,3 +12,7 @@ target/
 # Backup files
 *.rs.bk
 .opencode
+
+# Claude
+.claude/
+CLAUDE.md
